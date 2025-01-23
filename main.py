@@ -71,23 +71,47 @@ class user:
                     self.signOut()
                 elif (response == "2"):
                     self.adding_vac()
-                elif (response == "3"):
-                    x = input("Which vacation would you like to edit?")
-                    if(x.isalnum):
-                        if (int(x)> 1 and int(x) < 15):
+                elif response == "3":
+                    try:
+                        x = input("Which vacation would you like to edit? ")
+
+                        if not x.isdigit():
+                            print("Invalid input.")
+                            self.start2()
+                            return
+
+                        x = int(x)
+
+                        if 1 <= x <= 15:
                             self.get_vacation_update_details(x)
-                    else:
-                        print("Invalid input")
+                        else:
+                            print("Invalid vacation ID.")
+                            self.start2()
+                    except Exception as e:
+                        print(f"An error occurred: {e}")
                         self.start2()
-                elif (response == "2"):
-                    x = input("Which vacation would you like to delete?")
-                    if(x.isalnum):
-                        if (int(x)> 1 and int(x) < 15):
+
+                elif response == "2":
+                    try:
+                        x = input("Which vacation would you like to delete? ")
+
+                        if not x.isdigit():
+                            print("Invalid input.")
+                            self.start2()
+                            return
+
+                        x = int(x)
+
+                        if 1 <= x <= 15:
                             VacationLogic.del_vacation(x)
+                        else:
+                            print("Invalid vacation ID. Please enter a number between 1 and 15.")
+                            self.start2()
+                    except Exception as e:
+                        print(f"An error occurred: {e}")
+                        self.start2()
                     else:
-                        print("Invalid input")
-                else:
-                    print("Invalid input try again.")
+                        print("Invalid input try again.")
     def get_vacation_update_details(self, vacation_id):
 
         kwargs = {}
@@ -469,9 +493,6 @@ class user:
         except Exception as e:
             print(f"Error fetching vacation details: {e}")
     def like_vacation(self):
-        """
-        פונקציה שמסמנת לייק לחופשה עבור משתמש מסוים ומעדכנת את total_likes.
-        """
         vacation_id = self.viewed_vac
         try:
             check_query = """
@@ -547,7 +568,6 @@ class user:
         user_id = self.cur_user
         vacation_id = self.viewed_vac
         try:
-            # בדיקת קיום לייק
             query = """
             SELECT COUNT(*) AS like_count
             FROM likes
@@ -556,7 +576,6 @@ class user:
             params = (user_id, vacation_id['ID'])
             result = DAL().get_scalar(query, params)
 
-            # החזרת התוצאה
             return result and result['like_count'] > 0
 
         except Exception as e:
