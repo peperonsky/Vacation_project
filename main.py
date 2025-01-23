@@ -91,7 +91,7 @@ class user:
                         print(f"An error occurred: {e}")
                         self.start2()
 
-                elif response == "2":
+                elif response == "4":
                     try:
                         x = input("Which vacation would you like to delete? ")
 
@@ -103,15 +103,16 @@ class user:
                         x = int(x)
 
                         if 1 <= x <= 15:
-                            VacationLogic.del_vacation(x)
+                            VacationLogic().del_vacation(x)
+                            self.start2()
                         else:
                             print("Invalid vacation ID. Please enter a number between 1 and 15.")
                             self.start2()
                     except Exception as e:
                         print(f"An error occurred: {e}")
                         self.start2()
-                    else:
-                        print("Invalid input try again.")
+                else:
+                    print("Invalid input try again.")
     def get_vacation_update_details(self, vacation_id):
 
         kwargs = {}
@@ -249,10 +250,13 @@ class user:
         print("Enter which vacation you would like to view or enter anything else to go back: ")
         response = input()
         if (response.isalnum):
-            if (int(response) > 1 and int(response) < 15):
-                self.print_vacation_details_by_number(int(response))
-                self.viewing()
-            else:
+            try:
+                if (int(response) > 1 and int(response) < 15):
+                    self.print_vacation_details_by_number(int(response))
+                    self.viewing()
+                else:
+                    self.start2()
+            except:
                 self.start2()
         else:
             self.start2()
@@ -481,7 +485,6 @@ class user:
             selected_vacation = vacations[vacation_number - 1]
             
             print("Vacation Details:")
-        
             print(f"title: {selected_vacation['title']}")
             print(f"Start Date: {selected_vacation['start_date']}")
             print(f"End Date: {selected_vacation['end_date']}")
