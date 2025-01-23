@@ -88,7 +88,7 @@ vacation-management-system/
 
 ## Team Members
 - Guy Lautin: Contributions to main.py, counrty_logic.py.
-- Liad Mashi: Contributions to user_logic.py, README.md, Requriements.txt.
+- Liad Mashi: Contributions to user_logic.py, README.md, requirements.txt.
 - Ori Shamir: Contributions to dal.py, facade.py, vacation_logic.py.
 
 ## License
