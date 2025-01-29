@@ -1,4 +1,4 @@
-from dal import DAL
+from utils.dal import DAL
 import re
 from datetime import datetime
         
@@ -38,6 +38,85 @@ class UserLogic:
             return False
 
         return True
+    def get_user_id_by_email(self, email):
+        try:
+            query = "SELECT user_id FROM users WHERE email = %s"
+            params = (email,)
+            
+            result = DAL().get_scalar(query, params)
+            
+            if result:
+                return result['user_id']
+            else:
+                print(f"No user found with email: {email}")
+                return None
+        except Exception as e:
+            print(f"Error fetching user_id: {e}")
+            return None
+    
+    def is_user_exists_by_details(firstname, lastname, email, password) -> bool:
+        try:
+            query = """
+            SELECT COUNT(*) 
+            FROM users 
+            WHERE firstname = %s AND lastname = %s AND email = %s AND password = %s
+            """
+            params = (firstname, lastname, email, password)
+            result = DAL().get_scalar(query, params)
+            
+            if result and result['COUNT(*)'] > 0:
+                return True
+            return False
+        except Exception as e:
+            print(f"Error checking user existence: {e}")
+            return False
+    def get_liked_vacation_names(cur_user):
+        user_id = cur_user
+        try:
+            query = """
+            SELECT v.title
+            FROM vacations v
+            JOIN likes l ON v.id = l.vacations_id
+            WHERE l.users_id = %s
+            """
+            params = (user_id,)
+
+            vacations = DAL().get_table(query, params)
+
+            if not vacations:
+                print(f"No liked vacations found for user ID {user_id}.")
+                return []
+
+            print("Liked Vacations:")
+            for i, vacation in enumerate(vacations, start=1):
+                print(f"{i}. {vacation['title']}")
+
+            return [vacation['title'] for vacation in vacations]
+
+        except Exception as e:
+            print(f"Error retrieving liked vacation names: {e}")
+            return []
+    def get_first_name_by_id(user_id):
+
+        try:
+            query = """
+            SELECT firstname 
+            FROM users
+            WHERE user_id = %s
+            """
+            params = (user_id,)
+            
+            result = DAL().get_scalar(query, params)
+
+            if result:
+                return result['firstname']
+            else:
+                print(f"No user found with ID: {user_id}")
+                return None
+
+        except Exception as e:
+            print(f"Error retrieving first name: {e}")
+            return None
     
     def is_admin(self, user_id):
         check_query = """
