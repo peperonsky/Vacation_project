@@ -1,9 +1,11 @@
 import sys
 import os
 
+# הוספת התיקייה הראשית (vacation-system) לנתיב החיפוש
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
-from dal import DAL
+# כעת ניתן לייבא את DAL
+from utils.dal import DAL
 
 class CountryLogic:
     def __init__(self):
