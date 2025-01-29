@@ -1,8 +1,8 @@
-from country_logic import CountryLogic
-from vacation_logic import VacationLogic
-from system_facade import VacationFacade
-from user_logic import UserLogic
-from dal import DAL
+from logic.country_logic import CountryLogic
+from logic.vacation_logic import VacationLogic
+from facade.system_facade import VacationFacade
+from logic.user_logic import UserLogic
+from utils.dal import DAL
 import re
 import datetime
 class user:
@@ -20,43 +20,22 @@ class user:
                 self.signIn1()
             else:
                 print("Invalid input try again.")
-    def get_first_name_by_id(self, user_id):
-
-        try:
-            query = """
-            SELECT firstname 
-            FROM users
-            WHERE user_id = %s
-            """
-            params = (user_id,)
-            
-            result = DAL().get_scalar(query, params)
-
-            if result:
-                return result['firstname']
-            else:
-                print(f"No user found with ID: {user_id}")
-                return None
-
-        except Exception as e:
-            print(f"Error retrieving first name: {e}")
-            return None
     
         
     def start2(self):
-        name = self.get_first_name_by_id(self.cur_user)
+        name = UserLogic().get_first_name_by_id(self.cur_user)
         print("here")
         if (not UserLogic().is_admin(self.cur_user)):
             print("Hello ", name, "!\n What will you like to do?\n 1 - View vacations\n 2 - View liked vacations\n 3 - Sign out")
             while(True):
                 response = input()
                 if (response == "1"):
-                    self.showVacations()
+                    VacationLogic().showVacations()
                     self.which_vacation()
                 elif (response == "3"):
                     self.signOut()
                 elif (response == "2"):
-                    self.get_liked_vacation_names()
+                    self.get_liked_vacation_names(self.cur_user)
                     self.start2()
                 else:
                     print("Invalid input try again.")
@@ -103,7 +82,7 @@ class user:
                         x = int(x)
 
                         if 1 <= x <= 15:
-                            VacationLogic().del_vacation(x)
+                            VacationLogic().del_vacation(x-1)
                             self.start2()
                         else:
                             print("Invalid vacation ID. Please enter a number between 1 and 15.")
@@ -252,7 +231,7 @@ class user:
         if (response.isalnum):
             try:
                 if (int(response) > 1 and int(response) < 15):
-                    self.print_vacation_details_by_number(int(response))
+                    VacationLogic().print_vacation_details_by_number(int(response))
                     self.viewing()
                 else:
                     self.start2()
@@ -281,32 +260,6 @@ class user:
                     self.start2()
         else:
             self.start2()
-    def get_liked_vacation_names(self):
-        user_id = self.cur_user
-        try:
-            query = """
-            SELECT v.title
-            FROM vacations v
-            JOIN likes l ON v.id = l.vacations_id
-            WHERE l.users_id = %s
-            """
-            params = (user_id,)
-
-            vacations = DAL().get_table(query, params)
-
-            if not vacations:
-                print(f"No liked vacations found for user ID {user_id}.")
-                return []
-
-            print("Liked Vacations:")
-            for i, vacation in enumerate(vacations, start=1):
-                print(f"{i}. {vacation['title']}")
-
-            return [vacation['title'] for vacation in vacations]
-
-        except Exception as e:
-            print(f"Error retrieving liked vacation names: {e}")
-            return []
 
     def signUp1(self):
         flag = True
@@ -370,7 +323,7 @@ class user:
         try:   
             with UserLogic() as user_logic:
                 user_logic.add_user(f_name, l_name, email, password, d_o_b, 2)
-                self.cur_user = self.get_user_id_by_email(email)
+                self.cur_user = user_logic.get_user_id_by_email(email)
                 self.start2()
         except Exception as err:
             print(f"Error: {err}")
@@ -414,8 +367,8 @@ class user:
         self.signIn2(f_name, l_name, email, password)
     def signIn2(self, f_name, l_name, email, password):
         try:   
-            if (self.is_user_exists_by_details(f_name, l_name, email, password)):
-                self.cur_user = self.get_user_id_by_email(email)
+            if (UserLogic().is_user_exists_by_details(f_name, l_name, email, password)):
+                self.cur_user = UserLogic().get_user_id_by_email(email)
                 self.start2()
             else:
                 print("One or more of the details is wrong.")
@@ -426,75 +379,8 @@ class user:
     def signOut(self):
         self.cur_user = 0
         self.start()
-    def is_user_exists_by_details(self, firstname, lastname, email, password) -> bool:
-        try:
-            query = """
-            SELECT COUNT(*) 
-            FROM users 
-            WHERE firstname = %s AND lastname = %s AND email = %s AND password = %s
-            """
-            params = (firstname, lastname, email, password)
-            result = DAL().get_scalar(query, params)
-            
-            if result and result['COUNT(*)'] > 0:
-                return True
-            return False
-        except Exception as e:
-            print(f"Error checking user existence: {e}")
-            return False
-    def get_user_id_by_email(self, email):
-        try:
-            query = "SELECT user_id FROM users WHERE email = %s"
-            params = (email,)
-            
-            result = DAL().get_scalar(query, params)
-            
-            if result:
-                return result['user_id']
-            else:
-                print(f"No user found with email: {email}")
-                return None
-        except Exception as e:
-            print(f"Error fetching user_id: {e}")
-            return None
-    def showVacations(self):
-        try:
-           
-            vacations = DAL().get_table("SELECT title FROM vacations")
-
-            if not vacations:
-                print("No vacations found.")
-                return
-
-            print("List of all vacations:")
-            for i, vacation in enumerate(vacations, start=1):
-                print(f"{i} - {vacation['title']}")
-
-        except Exception as e:
-            print(f"Error fetching vacations: {e}")
-
-    def print_vacation_details_by_number(self, vacation_number):
-        try:
-            
-            vacations = DAL().get_table("SELECT title, start_date, end_date, price, description FROM vacations")
-
-            if not vacations or vacation_number < 1 or vacation_number > len(vacations):
-                print("Invalid vacation number.")
-                return
-
-            selected_vacation = vacations[vacation_number - 1]
-            
-            print("Vacation Details:")
-            print(f"title: {selected_vacation['title']}")
-            print(f"Start Date: {selected_vacation['start_date']}")
-            print(f"End Date: {selected_vacation['end_date']}")
-            print(f"Price: ${selected_vacation['price']:.2f}")
-            print(f"Description: {selected_vacation['description']}")
-            vacations = DAL().get_table("SELECT ID FROM vacations")
-            self.viewed_vac = vacations[vacation_number - 1]
-
-        except Exception as e:
-            print(f"Error fetching vacation details: {e}")
+    
+    
     def like_vacation(self):
         vacation_id = self.viewed_vac
         try:
@@ -584,7 +470,8 @@ class user:
         except Exception as e:
             print(f"Error checking like status: {e}")
             return False
-user1 = user()
-user1.start()
+if __name__ == "__main__":
+    user1 = user()
+    user1.start()
         
     
